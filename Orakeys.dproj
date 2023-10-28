@@ -104,8 +104,8 @@
         <VerInfo_IncludeVerInfo>true</VerInfo_IncludeVerInfo>
         <VerInfo_Locale>1033</VerInfo_Locale>
         <Icon_MainIcon>delphi_MAINICON.ico</Icon_MainIcon>
-        <VerInfo_Keys>CompanyName=;FileDescription=$(MSBuildProjectName);FileVersion=2.1.0.0;InternalName=Orakeys;LegalCopyright=Igor Poluyaktov;LegalTrademarks=;OriginalFilename=;ProgramID=igor.poluyaktov.$(MSBuildProjectName);ProductName=$(MSBuildProjectName);ProductVersion=2.1.0.0;Comments=</VerInfo_Keys>
-        <VerInfo_MinorVer>1</VerInfo_MinorVer>
+        <VerInfo_Keys>CompanyName=;FileDescription=$(MSBuildProjectName);FileVersion=2.2.0.0;InternalName=Orakeys;LegalCopyright=Igor Poluyaktov;LegalTrademarks=;OriginalFilename=;ProgramID=igor.poluyaktov.$(MSBuildProjectName);ProductName=$(MSBuildProjectName);ProductVersion=2.2.0.0;Comments=</VerInfo_Keys>
+        <VerInfo_MinorVer>2</VerInfo_MinorVer>
         <VerInfo_AutoIncVersion>true</VerInfo_AutoIncVersion>
         <VerInfo_MajorVer>2</VerInfo_MajorVer>
     </PropertyGroup>
