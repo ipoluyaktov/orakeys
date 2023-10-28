@@ -278,6 +278,7 @@ object fmMain: TfmMain
   end
   object oraSource: TOracleSession
     Preferences.ConvertUTF = cuUTF8ToUTF16
+    IsolationLevel = ilReadCommitted
     Left = 292
     Top = 321
   end

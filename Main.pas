@@ -55,16 +55,17 @@ type
     procedure miRefreshClick(Sender: TObject);
     procedure RefreshGraphObjectContextPopup(Graph: TSimpleGraph;
       GraphObject: TGraphObject; const MousePos: TPoint; var Handled: Boolean);
-    procedure rbStructureClick(Sender: TObject);
     procedure chbAutoRefreshClick(Sender: TObject);
     procedure tmrRefreshTimer(Sender: TObject);
   private
     { Private declarations }
+    FLatestConnectionError: string;
     FGraphChanged: boolean;
     FIni: TIniFile;
     FRowsInserted: integer;
     FRefreshId: integer; //Значение RECORD_ID из таблицы NRLOGS.LG_DATA_FLOW для auto-refresh
     function AppendSchema(p_TableName: string; p_IsSource: boolean): string;
+    function CheckConnections: boolean;
     procedure CompareStructure(p_Source, p_Target: TGraphNode);
     procedure CompareStructures;
     function GetAppVersion: string;
@@ -109,19 +110,15 @@ begin
 end;
 
 procedure TfmMain.FormShow(Sender: TObject);
-var
-  v_env: string;
 begin
-  v_env := oraTarget.LogonUsername + '@' + oraTarget.LogonDatabase;
-  Status.Panels[0].Text := 'Connecting to target: ' + v_env + '...';
-  oraTarget.Connected := True;
-  Status.Panels[0].Text := 'Connected to target: ' + v_env;
-  TableGraph.LoadFromFile('Tables.sgp');
-  JobGraph.LoadFromFile('Jobs.sgp');
-  RefreshGraph.LoadFromFile('Refresh.sgp');
-  PageControl.ActivePageIndex := FIni.ReadInteger('UI', 'ActivePageIndex', 0);
-  RemoveLinks;
-  ShowLinks;
+  if CheckConnections then begin
+    TableGraph.LoadFromFile('Tables.sgp');
+    JobGraph.LoadFromFile('Jobs.sgp');
+    RefreshGraph.LoadFromFile('Refresh.sgp');
+    PageControl.ActivePageIndex := FIni.ReadInteger('UI', 'ActivePageIndex', 0);
+    RemoveLinks;
+    ShowLinks;
+  end;
   FGraphChanged := False;
   PageControlChange(self);
   rchLog.Clear;
@@ -297,9 +294,42 @@ begin
   end;
 end;
 
-procedure TfmMain.rbStructureClick(Sender: TObject);
+function TfmMain.CheckConnections: boolean;
+var
+  v_check: TCheckConnectionResult;
+  v_env: string;
 begin
-
+  result := True;
+  try
+    oraSource.Connected := True;
+    v_env := oraSource.LogonUsername + '@' + oraSource.LogonDatabase;
+    Status.Panels[0].Text := 'Checking source: ' + v_env + '...';
+    v_check := oraSource.CheckConnection(False);
+    if v_check = ccError then begin
+      Status.Panels[0].Text := v_env + ' is unavailable';
+      result := False;
+      oraSource.Connected := False;
+    end
+    else begin
+      oraTarget.Connected := True;
+      v_env := oraTarget.LogonUsername + '@' + oraTarget.LogonDatabase;
+      Status.Panels[0].Text := 'Checking target: ' + v_env + '...';
+      if oraTarget.CheckConnection(False) = ccError then begin
+        Status.Panels[0].Text := v_env + ' is unavailable';
+        result := False;
+        oraTarget.Connected := False;
+      end
+      else
+        Status.Panels[0].Text := 'Connected to target: ' + v_env;
+    end;
+  except
+    on E: Exception do begin
+      result := False;
+      if E.Message <> FLatestConnectionError then
+        Log(E.Message);
+      FLatestConnectionError := E.Message;
+    end;
+  end;
 end;
 
 // ------------------------------ Refresh tab --------------------------------//
@@ -307,7 +337,7 @@ procedure TfmMain.InitRefreshTab;
 var
   v_src, v_tgt: TGraphNode;
 begin
-  oraSource.Connected := True;
+  CheckConnections;
   v_src := FindNode(RefreshGraph, 'Source');
   v_tgt := FindNode(RefreshGraph, 'Target');
   if v_src <> nil then begin
@@ -318,9 +348,9 @@ begin
     v_tgt.Text := oraTarget.LogonUsername + '@' + oraTarget.LogonDatabase;
     v_tgt.Brush.Color := clActiveCaption;
   end;
-  FetchClosedDateFromSource;
+  //FetchClosedDateFromSource;
   dateLastRefreshed.Date := FIni.ReadDate('Target', 'LastRefreshedDate', EncodeDate(1900, 1, 1));
-  CompareStructures;
+  //CompareStructures;
 end;
 
 procedure TfmMain.RefreshTable(p_TableName, p_SourceTable: string);
